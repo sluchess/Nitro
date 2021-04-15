@@ -16,6 +16,6 @@ TODO:
 * Add a user interface. (GUI?)
 * Split the code up into multiple files(?)
 * Create a makefile.
-
+* Add file encryption for security purposes.
 
 Starter code was taken from https://developerweb.net/viewtopic.php?id=5843 and modified for my use cases.
