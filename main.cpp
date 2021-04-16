@@ -15,7 +15,7 @@ static const int BUFFER_SIZE = 16*1024;
 
 static void UsageExit()
 {
-   printf("Usage:  xfer (send/receive) filename [host:Port]\n");
+   printf("Usage:  Nitro (send/receive) filename [host:Port]\n");
    exit(10);
 }
 
@@ -80,7 +80,8 @@ static void ReceiveFile(uint16 port, const char * fileName)
 
       struct sockaddr_in saAddr; memset(&saAddr, 0, sizeof(saAddr));
       saAddr.sin_family      = AF_INET;
-      saAddr.sin_addr.s_addr = htonl(0);  // (IPADDR_ANY)
+      saAddr.sin_addr.s_addr = INADDR_ANY;  // (INADDR_ANY) Bind to all interfaces instead of only localhost.
+      // saAddr.sin_addr.s_addr = htonl(0);  // (IPADDR_ANY) typo?
       saAddr.sin_port        = htons(port);
 
       if ((bind(s, (struct sockaddr *) &saAddr, sizeof(saAddr)) == 0)&&(listen(s, 10) == 0))
@@ -143,10 +144,24 @@ int main(int argc, char ** argv)
 
    const char * fileName = argv[2];
 
-   ip_address ip = isSend ? GetHostByName(argv[3]) : 0;
+   char * token;
+   ip_address ip;
    uint16 port = 0;
-   const char * portColon = strchr(argv[3], ':');
-   port = portColon ? atoi(portColon+1) : 0;
+   if (isSend)
+   {
+      token = strtok(argv[3], ":");
+      ip = GetHostByName(token);
+      token = strtok(NULL, "");
+      port = atoi(token);
+   }
+   else
+   {
+      port = atoi(argv[3]);
+   }
+   // ip_address ip = isSend ? GetHostByName(argv[3]) : 0;
+   // uint16 port = 0;
+   // const char * portColon = strchr(argv[3], ':');
+   // port = portColon ? atoi(portColon+1) : 0;
    if (port == 0) port = 9999;
 
    if (isSend) SendFile(ip, port, fileName);
