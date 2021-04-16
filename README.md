@@ -4,8 +4,8 @@ Nitro allows for users to send and receive large files directly to and from one 
 Use:
 ```
 make
-./Nitro receive filename_to_create.txt 9999 
-./Nitro send filename_to_send.txt 127.0.0.1:9999
+./Nitro receive filename_to_create port# 
+./Nitro send filename_to_send ip_address_destination:port#
 ```
 
 TODO:
