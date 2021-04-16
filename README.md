@@ -3,9 +3,9 @@ Nitro allows for users to send and receive large files directly to and from one 
 
 Use:
 ```
-gcc main.cpp
-./a.out receive filename_to_create.txt 9999 
-./a.out send filename_to_send.txt 127.0.0.1:9999
+make
+./Nitro receive filename_to_create.txt 9999 
+./Nitro send filename_to_send.txt 127.0.0.1:9999
 ```
 
 TODO:
