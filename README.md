@@ -1,11 +1,11 @@
 # Nitro
 Nitro allows for users to send and receive large files directly to and from one another.
 
-Use:
+Use (note that key1 and key2 and optional arguments used for file encryption):
 ```
 make
-./Nitro receive filename_to_create port# 
-./Nitro send filename_to_send ip_address_destination:port#
+./Nitro receive filename_to_create port# key1 key2
+./Nitro send filename_to_send ip_address_destination:port# key1 key2
 ```
 
 TODO:

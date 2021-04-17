@@ -7,11 +7,18 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <openssl/aes.h>
 
 typedef unsigned long ip_address;
 typedef unsigned short uint16;
 
 static const int BUFFER_SIZE = 16*1024;
+
+// temporary keys for encryption
+unsigned char ckey[] =  "thiskeyisverybad";
+unsigned char ivec[] = "dontusethisinput";
+
+bool do_crypt = false;
 
 static void UsageExit()
 {
@@ -25,9 +32,56 @@ static ip_address GetHostByName(const char * name)
    return ntohl(he ? *((ip_address*)he->h_addr) : 0);
 }
 
+// Function for en/decrypting the file. https://tinyurl.com/ywpxj9up
+static FILE * doCrypt(bool encrypt, const char * fileName, FILE * fpIn)
+{
+   int bytes_read, bytes_written;
+   unsigned char indata[AES_BLOCK_SIZE];
+   unsigned char outdata[AES_BLOCK_SIZE];
+
+   int len = strlen(fileName);
+   char outFile[len+4] = "";
+   strcat(outFile, "aes_");
+   strcat(outFile, fileName);
+   
+   FILE * fpOut = fopen(outFile, "w");
+
+   /* data structure that contains the key itself */
+   AES_KEY key;
+
+   /* set the encryption key */
+   AES_set_encrypt_key(ckey, 128, &key);
+
+   /* set where on the 128 bit encrypted block to begin encryption*/
+   int num = 0;
+
+   while (1) {
+      bytes_read = fread(indata, 1, AES_BLOCK_SIZE, fpIn);
+
+      if (encrypt) // user wants to encypt file
+         AES_cfb128_encrypt(indata, outdata, bytes_read, &key, ivec, &num, AES_ENCRYPT);
+      else // user wants to decrypt
+         AES_cfb128_encrypt(indata, outdata, bytes_read, &key, ivec, &num, AES_DECRYPT);
+
+      bytes_written = fwrite(outdata, 1, bytes_read, fpOut);
+      if (bytes_read < AES_BLOCK_SIZE)
+         break;
+   }
+   printf("Encrypted %d bytes.\n", bytes_written);
+   return fpOut;
+}
+
 static void SendFile(ip_address ipAddress, uint16 port, const char * fileName)
 {
    FILE * fpIn = fopen(fileName, "r");
+
+   if (do_crypt)
+   {
+      // encrypt file and then move pointer to the beginning of it to prepare for transfer.
+      fpIn = doCrypt(true, fileName, fpIn);
+      rewind(fpIn);
+   }
+
    if (fpIn)
    {
       int s = socket(AF_INET, SOCK_STREAM, 0);
@@ -110,6 +164,12 @@ static void ReceiveFile(uint16 port, const char * fileName)
                   }
                }
 
+               if (do_crypt)
+               {
+                  // decrypt file
+                  fpIn = doCrypt(false, fileName, fpIn);
+               }
+
                fclose(fpIn);
             }
             else printf("Error, couldn't open file [%s] to receive!\n", fileName);
@@ -127,6 +187,15 @@ static void ReceiveFile(uint16 port, const char * fileName)
 int main(int argc, char ** argv)
 {
    if (argc < 4) UsageExit();
+
+   // the last two arguments are used for encryption purposes.
+   if (argc == 6)
+   {
+      // copy arguments to keys
+      memcpy(ckey, argv[4], sizeof ckey);
+      memcpy(ivec, argv[5], sizeof ivec);
+      do_crypt = true;
+   }
 
 #ifdef WIN32
    // Windows requires this to start up the networking API
