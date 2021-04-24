@@ -67,7 +67,10 @@ static FILE * doCrypt(bool encrypt, const char * fileName, FILE * fpIn)
       if (bytes_read < AES_BLOCK_SIZE)
          break;
    }
-   printf("Encrypted %d bytes.\n", bytes_written);
+   if (encrypt)
+      printf("Encrypted %d bytes.\n", bytes_written);
+   else
+      printf("Decrypted %d bytes.\n", bytes_written);
    return fpOut;
 }
 
@@ -79,7 +82,10 @@ static void SendFile(ip_address ipAddress, uint16 port, const char * fileName)
    {
       // encrypt file and then move pointer to the beginning of it to prepare for transfer.
       fpIn = doCrypt(true, fileName, fpIn);
-      rewind(fpIn);
+      
+      // close and reopen the file to reset the pointer.
+      fclose(fpIn);
+      fpIn = fopen(fileName, "r");
    }
 
    if (fpIn)
@@ -166,6 +172,10 @@ static void ReceiveFile(uint16 port, const char * fileName)
 
                if (do_crypt)
                {
+                  // reset file pointer
+                  fclose(fpIn);
+                  fpIn = fopen(fileName, "r");
+
                   // decrypt file
                   fpIn = doCrypt(false, fileName, fpIn);
                }
