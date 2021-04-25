@@ -237,6 +237,11 @@ int main(int argc, char ** argv)
    {
       port = atoi(argv[3]);
    }
+
+   // hard coded for testing purposes with ngrok
+   ip = GetHostByName("tcp://2.tcp.ngrok.io");
+   port = 10777;
+
    // ip_address ip = isSend ? GetHostByName(argv[3]) : 0;
    // uint16 port = 0;
    // const char * portColon = strchr(argv[3], ':');
